@@ -34,6 +34,12 @@ let state = {
   }
 };
 
+let pendingDelete = {
+  type: "",
+  id: ""
+};
+let resetNeedsConfirm = false;
+
 const sections = document.querySelectorAll(".page-section");
 const tabButtons = document.querySelectorAll(".tab-button");
 
@@ -78,6 +84,15 @@ function formatNumber(value) {
   });
 }
 
+function escapeHTML(text) {
+  return String(text)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function getUnitLabel() {
   return state.settings.units === "metric" ? "kg" : "lb";
 }
@@ -102,6 +117,10 @@ function showMessage(elementId, message, isSuccess = false) {
 
 function clearMessage(elementId) {
   showMessage(elementId, "", false);
+}
+
+function isPendingDelete(type, id) {
+  return pendingDelete.type === type && pendingDelete.id === id;
 }
 
 function setDefaultDates() {
@@ -235,12 +254,12 @@ function renderNutrition() {
       (meal) => `
         <tr>
           <td>${meal.date}</td>
-          <td><strong>${meal.name}</strong><br><span class="muted">${meal.mealType}</span></td>
+          <td><strong>${escapeHTML(meal.name)}</strong><br><span class="muted">${escapeHTML(meal.mealType)}</span></td>
           <td>${formatNumber(meal.calories)}</td>
           <td>P ${formatNumber(meal.protein)}g / C ${formatNumber(meal.carbs)}g / F ${formatNumber(meal.fat)}g</td>
           <td>
             <button class="table-action" type="button" data-edit-meal="${meal.id}">Edit</button>
-            <button class="table-action delete-action" type="button" data-delete-meal="${meal.id}">Delete</button>
+            <button class="table-action delete-action" type="button" data-delete-meal="${meal.id}">${isPendingDelete("meals", meal.id) ? "Confirm" : "Delete"}</button>
           </td>
         </tr>
       `
@@ -260,13 +279,13 @@ function renderWorkouts() {
         (workout) => `
           <tr>
             <td>${workout.date}</td>
-            <td><strong>${workout.exercise}</strong></td>
+            <td><strong>${escapeHTML(workout.exercise)}</strong></td>
             <td>${formatNumber(workout.weight)} ${unit}</td>
             <td>${workout.sets} x ${workout.reps}</td>
             <td>${formatNumber(getWorkoutVolume(workout))}</td>
             <td>
               <button class="table-action" type="button" data-edit-workout="${workout.id}">Edit</button>
-              <button class="table-action delete-action" type="button" data-delete-workout="${workout.id}">Delete</button>
+              <button class="table-action delete-action" type="button" data-delete-workout="${workout.id}">${isPendingDelete("workouts", workout.id) ? "Confirm" : "Delete"}</button>
             </td>
           </tr>
         `
@@ -302,7 +321,7 @@ function renderMeasurements() {
             <td>${measurement.bodyFat === "" ? "--" : `${formatNumber(measurement.bodyFat)}%`}</td>
             <td>
               <button class="table-action" type="button" data-edit-measurement="${measurement.id}">Edit</button>
-              <button class="table-action delete-action" type="button" data-delete-measurement="${measurement.id}">Delete</button>
+              <button class="table-action delete-action" type="button" data-delete-measurement="${measurement.id}">${isPendingDelete("measurements", measurement.id) ? "Confirm" : "Delete"}</button>
             </td>
           </tr>
         `
@@ -328,7 +347,7 @@ function renderPersonalRecords(selector, limit) {
     .map(
       (record) => `
         <div class="record-item">
-          <span>${record.exercise}<br><small class="muted">${record.date}</small></span>
+          <span>${escapeHTML(record.exercise)}<br><small class="muted">${record.date}</small></span>
           <strong>${formatNumber(record.weight)} ${unit}</strong>
         </div>
       `
@@ -580,17 +599,24 @@ function editMeasurement(id) {
 }
 
 function deleteEntry(type, id) {
-  if (!confirm("Delete this entry permanently?")) {
+  if (!isPendingDelete(type, id)) {
+    pendingDelete = { type, id };
+    renderAll();
     return;
   }
 
   state[type] = state[type].filter((entry) => entry.id !== id);
+  pendingDelete = { type: "", id: "" };
   saveState();
   renderAll();
 }
 
 function resetAllData() {
-  if (!confirm("Clear all saved tracker data? This cannot be undone.")) {
+  const resetButton = document.querySelector("#resetButton");
+
+  if (!resetNeedsConfirm) {
+    resetNeedsConfirm = true;
+    resetButton.textContent = "Confirm Clear";
     return;
   }
 
@@ -598,6 +624,9 @@ function resetAllData() {
   state.meals = [];
   state.workouts = [];
   state.measurements = [];
+  pendingDelete = { type: "", id: "" };
+  resetNeedsConfirm = false;
+  resetButton.textContent = "Clear All Data";
   saveState();
   renderAll();
 }
