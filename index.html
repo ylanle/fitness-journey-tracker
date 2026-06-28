@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gym Progress Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">Mini Project 2</p>
+      <h1>Gym Progress Tracker</h1>
+      <p class="tagline">Track nutrition, workouts, measurements, and progress in one simple dashboard.</p>
+    </div>
+    <button class="danger-button" id="resetButton" type="button">Clear All Data</button>
+  </header>
+
+  <nav class="tab-nav" aria-label="Tracker sections">
+    <button class="tab-button active" type="button" data-section="dashboard">Dashboard</button>
+    <button class="tab-button" type="button" data-section="nutrition">Nutrition</button>
+    <button class="tab-button" type="button" data-section="workouts">Workouts</button>
+    <button class="tab-button" type="button" data-section="measurements">Measurements</button>
+    <button class="tab-button" type="button" data-section="settings">Settings</button>
+  </nav>
+
+  <main>
+    <section class="page-section active" id="dashboard" aria-labelledby="dashboardTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Overview</p>
+          <h2 id="dashboardTitle">Dashboard</h2>
+        </div>
+        <p id="todayLabel" class="muted"></p>
+      </div>
+
+      <div class="stats-grid">
+        <article class="stat-card">
+          <span>Today's Calories</span>
+          <strong id="todayCalories">0</strong>
+          <small id="calorieTargetText">Target: 2,200</small>
+        </article>
+        <article class="stat-card">
+          <span>Today's Protein</span>
+          <strong id="todayProtein">0g</strong>
+          <small id="proteinTargetText">Target: 150g</small>
+        </article>
+        <article class="stat-card">
+          <span>Latest Weight</span>
+          <strong id="latestWeight">--</strong>
+          <small id="weightChange">Add measurements to see change</small>
+        </article>
+        <article class="stat-card">
+          <span>Total Workout Volume</span>
+          <strong id="totalVolume">0</strong>
+          <small>Weight x sets x reps</small>
+        </article>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="panel">
+          <div class="panel-header">
+            <h3>Personal Records</h3>
+          </div>
+          <div id="dashboardPrs" class="record-list"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h3>Weight Trend</h3>
+          </div>
+          <div id="dashboardChart" class="chart-box"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="page-section" id="nutrition" aria-labelledby="nutritionTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Food and macros</p>
+          <h2 id="nutritionTitle">Nutrition Tracker</h2>
+        </div>
+        <div class="mini-total">
+          <span id="nutritionTotalCalories">0 calories</span>
+          <span id="nutritionTotalProtein">0g protein</span>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <form class="panel form-panel" id="nutritionForm" novalidate>
+          <h3>Add Nutrition Entry</h3>
+          <input type="hidden" id="nutritionId">
+          <label for="mealDate">Date</label>
+          <input id="mealDate" type="date" required>
+
+          <label for="foodName">Food or meal name</label>
+          <input id="foodName" type="text" placeholder="Chicken rice bowl" required>
+
+          <label for="mealType">Meal type</label>
+          <select id="mealType" required>
+            <option value="Breakfast">Breakfast</option>
+            <option value="Lunch">Lunch</option>
+            <option value="Dinner">Dinner</option>
+            <option value="Snack">Snack</option>
+          </select>
+
+          <div class="form-row">
+            <div>
+              <label for="calories">Calories</label>
+              <input id="calories" type="number" min="1" step="1" placeholder="650" required>
+            </div>
+            <div>
+              <label for="protein">Protein (g)</label>
+              <input id="protein" type="number" min="0" step="0.1" placeholder="42" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label for="carbs">Carbs (g)</label>
+              <input id="carbs" type="number" min="0" step="0.1" placeholder="70" required>
+            </div>
+            <div>
+              <label for="fat">Fat (g)</label>
+              <input id="fat" type="number" min="0" step="0.1" placeholder="18" required>
+            </div>
+          </div>
+
+          <p class="form-message" id="nutritionMessage" aria-live="polite"></p>
+          <div class="button-row">
+            <button class="primary-button" type="submit">Save Entry</button>
+            <button class="secondary-button" id="cancelNutritionEdit" type="button">Cancel Edit</button>
+          </div>
+        </form>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h3>Recent Nutrition Entries</h3>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Meal</th>
+                  <th>Calories</th>
+                  <th>Macros</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="nutritionTable"></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="page-section" id="workouts" aria-labelledby="workoutsTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Training log</p>
+          <h2 id="workoutsTitle">Workout Tracker</h2>
+        </div>
+        <p class="muted">Volume is calculated as weight x sets x reps.</p>
+      </div>
+
+      <div class="content-grid">
+        <form class="panel form-panel" id="workoutForm" novalidate>
+          <h3>Add Workout Entry</h3>
+          <input type="hidden" id="workoutId">
+          <label for="workoutDate">Date</label>
+          <input id="workoutDate" type="date" required>
+
+          <label for="exerciseName">Exercise name</label>
+          <input id="exerciseName" list="exerciseLibrary" type="text" placeholder="Bench Press" required>
+          <datalist id="exerciseLibrary"></datalist>
+
+          <div class="form-row">
+            <div>
+              <label for="weight">Weight</label>
+              <input id="weight" type="number" min="0.1" step="0.1" placeholder="100" required>
+            </div>
+            <div>
+              <label for="sets">Sets</label>
+              <input id="sets" type="number" min="1" step="1" placeholder="3" required>
+            </div>
+            <div>
+              <label for="reps">Reps</label>
+              <input id="reps" type="number" min="1" step="1" placeholder="8" required>
+            </div>
+          </div>
+
+          <p class="form-message" id="workoutMessage" aria-live="polite"></p>
+          <div class="button-row">
+            <button class="primary-button" type="submit">Save Workout</button>
+            <button class="secondary-button" id="cancelWorkoutEdit" type="button">Cancel Edit</button>
+          </div>
+        </form>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h3>Recent Workout Entries</h3>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Exercise</th>
+                  <th>Weight</th>
+                  <th>Sets x Reps</th>
+                  <th>Volume</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="workoutTable"></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+
+      <article class="panel">
+        <div class="panel-header">
+          <h3>Highest Weight Personal Records</h3>
+        </div>
+        <div id="personalRecords" class="record-list"></div>
+      </article>
+    </section>
+
+    <section class="page-section" id="measurements" aria-labelledby="measurementsTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Body metrics</p>
+          <h2 id="measurementsTitle">Measurement Tracker</h2>
+        </div>
+        <div class="mini-total">
+          <span id="measurementLatest">Latest: --</span>
+          <span id="measurementChange">Change: --</span>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <form class="panel form-panel" id="measurementForm" novalidate>
+          <h3>Add Measurement</h3>
+          <input type="hidden" id="measurementId">
+          <label for="measurementDate">Date</label>
+          <input id="measurementDate" type="date" required>
+
+          <div class="form-row">
+            <div>
+              <label for="bodyWeight">Body weight</label>
+              <input id="bodyWeight" type="number" min="0.1" step="0.1" placeholder="170" required>
+            </div>
+            <div>
+              <label for="bodyFat">Body fat %</label>
+              <input id="bodyFat" type="number" min="0" max="100" step="0.1" placeholder="18">
+            </div>
+          </div>
+
+          <p class="form-message" id="measurementMessage" aria-live="polite"></p>
+          <div class="button-row">
+            <button class="primary-button" type="submit">Save Measurement</button>
+            <button class="secondary-button" id="cancelMeasurementEdit" type="button">Cancel Edit</button>
+          </div>
+        </form>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h3>Measurement History</h3>
+          </div>
+          <div id="measurementChart" class="chart-box"></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Weight</th>
+                  <th>Body Fat</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="measurementTable"></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="page-section" id="settings" aria-labelledby="settingsTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Preferences</p>
+          <h2 id="settingsTitle">Settings</h2>
+        </div>
+      </div>
+
+      <form class="panel form-panel narrow-panel" id="settingsForm" novalidate>
+        <h3>Daily Targets</h3>
+        <label for="units">Preferred units</label>
+        <select id="units">
+          <option value="imperial">Imperial (lb)</option>
+          <option value="metric">Metric (kg)</option>
+        </select>
+
+        <div class="form-row">
+          <div>
+            <label for="dailyCalories">Daily calories</label>
+            <input id="dailyCalories" type="number" min="1" step="1" required>
+          </div>
+          <div>
+            <label for="targetProtein">Protein target (g)</label>
+            <input id="targetProtein" type="number" min="0" step="1" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label for="targetCarbs">Carb target (g)</label>
+            <input id="targetCarbs" type="number" min="0" step="1" required>
+          </div>
+          <div>
+            <label for="targetFat">Fat target (g)</label>
+            <input id="targetFat" type="number" min="0" step="1" required>
+          </div>
+        </div>
+
+        <p class="form-message" id="settingsMessage" aria-live="polite"></p>
+        <button class="primary-button" type="submit">Save Settings</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <p>Built with plain HTML, CSS, JavaScript, and localStorage for GitHub Pages.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
